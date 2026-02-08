@@ -3,7 +3,7 @@ const { useState, useEffect } = React;
 function App() {
     // Состояния
     const [targetAmount, setTargetAmount] = useState(210000);
-    const [currentAmount, setCurrentAmount] = useState(0); // ← ИСПРАВЛЕНО: было 12556
+    const [currentAmount, setCurrentAmount] = useState(0);
     const [incomeAmount, setIncomeAmount] = useState('');
     const [incomeDescription, setIncomeDescription] = useState('');
     const [history, setHistory] = useState([]);
@@ -15,11 +15,55 @@ function App() {
         const savedHistory = localStorage.getItem('incomeHistory');
 
         if (savedTarget) setTargetAmount(parseInt(savedTarget));
-        if (savedCurrent) setCurrentAmount(parseInt(savedCurrent)); // Будет 0 если нет сохранённого
+        if (savedCurrent) setCurrentAmount(parseInt(savedCurrent));
         if (savedHistory) setHistory(JSON.parse(savedHistory));
     }, []);
 
-    // Остальной код без изменений...
+    // Сохранение данных в localStorage при изменении
+    useEffect(() => {
+        localStorage.setItem('targetAmount', targetAmount);
+        localStorage.setItem('currentAmount', currentAmount);
+        localStorage.setItem('incomeHistory', JSON.stringify(history));
+    }, [targetAmount, currentAmount, history]);
+
+    // Добавление дохода
+    const addIncome = () => {
+        const amount = parseInt(incomeAmount);
+        if (!amount || amount <= 0) {
+            alert('Введите корректную сумму');
+            return;
+        }
+
+        const newIncome = {
+            id: Date.now(),
+            amount: amount,
+            description: incomeDescription || 'Без описания',
+            date: new Date().toLocaleString('ru-RU')
+        };
+
+        setCurrentAmount(prev => prev + amount);
+        setHistory(prev => [newIncome, ...prev]);
+        setIncomeAmount('');
+        setIncomeDescription('');
+    };
+
+    // Удаление дохода из истории
+    const deleteIncome = (id, amount) => {
+        if (window.confirm('Удалить этот доход?')) {
+            setCurrentAmount(prev => prev - amount);
+            setHistory(prev => prev.filter(item => item.id !== id));
+        }
+    };
+
+    // Изменение цели
+    const updateTarget = () => {
+        const newTarget = prompt('Введите новую цель (руб.):', targetAmount);
+        if (newTarget && !isNaN(newTarget) && newTarget > 0) {
+            setTargetAmount(parseInt(newTarget));
+        }
+    };
+
+    // Расчет процента выполнения
     const progressPercentage = Math.min(Math.round((currentAmount / targetAmount) * 100), 100);
 
     return React.createElement('div', null,
@@ -46,7 +90,10 @@ function App() {
                     )
                 )
             ),
-            React.createElement('button', { onClick: updateTarget },
+            React.createElement('button', {
+                    onClick: updateTarget,
+                    className: 'target-button'
+                },
                 React.createElement('i', { className: 'fas fa-bullseye' }),
                 ' Изменить цель'
             )
@@ -61,7 +108,8 @@ function App() {
                     id: 'amount',
                     value: incomeAmount,
                     onChange: (e) => setIncomeAmount(e.target.value),
-                    placeholder: 'Например: 5000'
+                    placeholder: 'Например: 5000',
+                    className: 'income-input'
                 })
             ),
             React.createElement('div', { className: 'form-group' },
@@ -71,10 +119,14 @@ function App() {
                     value: incomeDescription,
                     onChange: (e) => setIncomeDescription(e.target.value),
                     placeholder: 'Зарплата, фриланс, подарок...',
-                    rows: '3'
+                    rows: '3',
+                    className: 'description-textarea'
                 })
             ),
-            React.createElement('button', { onClick: addIncome },
+            React.createElement('button', {
+                    onClick: addIncome,
+                    className: 'add-income-button'
+                },
                 React.createElement('i', { className: 'fas fa-plus-circle' }),
                 ' Добавить доход'
             )

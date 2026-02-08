@@ -11,12 +11,166 @@
 <div id="root" class="container"></div>
 
 <!-- React и ReactDOM -->
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <!-- Babel для JSX -->
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <!-- Наше приложение -->
-<script type="text/babel" data-presets="react" src="app.js"></script>
+<script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+        // Состояния
+        const [targetAmount, setTargetAmount] = useState(210000);
+        const [currentAmount, setCurrentAmount] = useState(0);
+        const [incomeAmount, setIncomeAmount] = useState('');
+        const [incomeDescription, setIncomeDescription] = useState('');
+        const [history, setHistory] = useState([]);
+
+        // Загрузка данных из localStorage при загрузке
+        useEffect(() => {
+            const savedTarget = localStorage.getItem('targetAmount');
+            const savedCurrent = localStorage.getItem('currentAmount');
+            const savedHistory = localStorage.getItem('incomeHistory');
+
+            if (savedTarget) setTargetAmount(parseInt(savedTarget));
+            if (savedCurrent) setCurrentAmount(parseInt(savedCurrent));
+            if (savedHistory) setHistory(JSON.parse(savedHistory));
+        }, []);
+
+        // Сохранение данных в localStorage при изменении
+        useEffect(() => {
+            localStorage.setItem('targetAmount', targetAmount);
+            localStorage.setItem('currentAmount', currentAmount);
+            localStorage.setItem('incomeHistory', JSON.stringify(history));
+        }, [targetAmount, currentAmount, history]);
+
+        // Добавление дохода
+        const addIncome = () => {
+            const amount = parseInt(incomeAmount);
+            if (!amount || amount <= 0) {
+                alert('Введите корректную сумму');
+                return;
+            }
+
+            const newIncome = {
+                id: Date.now(),
+                amount: amount,
+                description: incomeDescription || 'Без описания',
+                date: new Date().toLocaleString('ru-RU')
+            };
+
+            setCurrentAmount(prev => prev + amount);
+            setHistory(prev => [newIncome, ...prev]);
+            setIncomeAmount('');
+            setIncomeDescription('');
+        };
+
+        // Удаление дохода из истории
+        const deleteIncome = (id, amount) => {
+            if (window.confirm('Удалить этот доход?')) {
+                setCurrentAmount(prev => prev - amount);
+                setHistory(prev => prev.filter(item => item.id !== id));
+            }
+        };
+
+        // Изменение цели
+        const updateTarget = () => {
+            const newTarget = prompt('Введите новую цель (руб.):', targetAmount);
+            if (newTarget && !isNaN(newTarget) && newTarget > 0) {
+                setTargetAmount(parseInt(newTarget));
+            }
+        };
+
+        // Расчет процента выполнения
+        const progressPercentage = Math.min(Math.round((currentAmount / targetAmount) * 100), 100);
+
+        return (
+            <div>
+                <h1><i className="fas fa-chart-line"></i> Трекер доходов</h1>
+
+                <section className="target-section">
+                    <h2>Цель</h2>
+                    <div className="target-display">
+                        <div className="progress-container">
+                            <div
+                                className="progress-bar"
+                                style={{ width: `${progressPercentage}%` }}
+                            >
+                                {progressPercentage}%
+                            </div>
+                        </div>
+
+                        <div className="progress-labels">
+                            <span className="current-amount-label">{currentAmount.toLocaleString()} руб.</span>
+                            <span className="target-amount-label">Цель: {targetAmount.toLocaleString()} руб.</span>
+                        </div>
+                    </div>
+                    <button onClick={updateTarget}>
+                        <i className="fas fa-bullseye"></i> Изменить цель
+                    </button>
+                </section>
+
+                <section className="add-income">
+                    <h2>Добавить доход</h2>
+                    <div className="form-group">
+                        <label htmlFor="amount">Сумма (руб.)</label>
+                        <input
+                            type="number"
+                            id="amount"
+                            value={incomeAmount}
+                            onChange={(e) => setIncomeAmount(e.target.value)}
+                            placeholder="Например: 5000"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="description">Описание (необязательно)</label>
+                        <textarea
+                            id="description"
+                            value={incomeDescription}
+                            onChange={(e) => setIncomeDescription(e.target.value)}
+                            placeholder="Зарплата, фриланс, подарок..."
+                            rows="3"
+                        />
+                    </div>
+                    <button onClick={addIncome}>
+                        <i className="fas fa-plus-circle"></i> Добавить доход
+                    </button>
+                </section>
+
+                <section className="history-section">
+                    <h2>История доходов</h2>
+                    <div className="total-income">
+                        Всего накоплено: <span style={{color: '#2E7D32'}}>{currentAmount.toLocaleString()} руб.</span>
+                    </div>
+                    <div className="history-list">
+                        {history.length === 0 ? (
+                            <div className="empty-history">История доходов пуста</div>
+                        ) : (
+                            history.map(item => (
+                                <div key={item.id} className="history-item">
+                                    <div className="history-info">
+                                        <div>{item.description}</div>
+                                        <div className="history-date">{item.date}</div>
+                                    </div>
+                                    <div className="history-amount">+{item.amount.toLocaleString()} руб.</div>
+                                    <button
+                                        className="delete-btn"
+                                        onClick={() => deleteIncome(item.id, item.amount)}
+                                    >
+                                        <i className="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </section>
+            </div>
+        );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+</script>
 </body>
 </html>
