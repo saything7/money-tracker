@@ -52,9 +52,8 @@ h2 {
     background: #e0e0e0;
     border-radius: 20px;
     overflow: hidden;
-    margin-bottom: 10px; /* Уменьшили, т.к. labels теперь снаружи */
+    margin-bottom: 10px;
     border: 2px solid #ddd;
-    position: relative;
 }
 
 .progress-bar {
@@ -70,7 +69,6 @@ h2 {
     min-width: 50px;
 }
 
-/* ПОДПИСИ СНАРУЖИ прогресс-контейнера */
 .progress-labels {
     display: flex;
     justify-content: space-between;
