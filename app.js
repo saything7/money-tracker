@@ -3,7 +3,7 @@ const { useState, useEffect } = React;
 function App() {
     // Состояния
     const [targetAmount, setTargetAmount] = useState(210000);
-    const [currentAmount, setCurrentAmount] = useState(12556);
+    const [currentAmount, setCurrentAmount] = useState(0);
     const [incomeAmount, setIncomeAmount] = useState('');
     const [incomeDescription, setIncomeDescription] = useState('');
     const [history, setHistory] = useState([]);
